@@ -1,0 +1,255 @@
+---
+import ImageCard from '../components/ImageCard.astro';
+import { listImages } from '../lib/db';
+
+const env = Astro.locals.runtime?.env as App.Locals['runtime']['env'];
+const r2BaseUrl = env?.R2_PUBLIC_URL ?? '';
+
+const initialImages = await listImages(env.DB, 1);
+const imagesWithUrl = initialImages.map(img => ({
+  ...img,
+  url: `${r2BaseUrl}/${img.r2_key}`,
+}));
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ImgForge — Gallery</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background: #0f0f0f;
+      color: #e0e0e0;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid #2a2a2a;
+      background: #111;
+    }
+    nav .brand { font-weight: 700; font-size: 1.1rem; color: #fff; text-decoration: none; }
+    nav .links a {
+      color: #aaa;
+      text-decoration: none;
+      margin-left: 1.25rem;
+      font-size: 0.9rem;
+      transition: color 0.2s;
+    }
+    nav .links a:hover { color: #fff; }
+    nav .links a.active { color: #6366f1; }
+    main { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+    h1 { font-size: 1.4rem; font-weight: 700; }
+    .count { color: #888; font-size: 0.9rem; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1rem;
+    }
+    .empty {
+      text-align: center;
+      color: #555;
+      padding: 4rem 1rem;
+    }
+    .empty a { color: #6366f1; text-decoration: none; }
+    .load-more-wrap { text-align: center; margin-top: 2rem; padding-bottom: 3rem; }
+    .load-more-btn {
+      padding: 0.65rem 2rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      color: #aaa;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: background 0.2s, color 0.2s;
+    }
+    .load-more-btn:hover { background: #252525; color: #fff; }
+    .load-more-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a class="brand" href="/gallery">ImgForge</a>
+    <div class="links">
+      <a href="/upload">Upload</a>
+      <a href="/gallery" class="active">Gallery</a>
+      <a href="#" id="logout-link">Logout</a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="page-header">
+      <h1>Gallery</h1>
+      <span class="count" id="img-count">{imagesWithUrl.length} image{imagesWithUrl.length !== 1 ? 's' : ''}</span>
+    </div>
+
+    {imagesWithUrl.length === 0 ? (
+      <div class="empty">
+        <p>No images yet. <a href="/upload">Upload your first image →</a></p>
+      </div>
+    ) : (
+      <div class="grid" id="gallery-grid">
+        {imagesWithUrl.map(img => (
+          <ImageCard
+            id={img.id}
+            filename={img.filename}
+            url={img.url}
+            size_bytes={img.size_bytes}
+            width={img.width}
+            height={img.height}
+            uploaded_at={img.uploaded_at}
+          />
+        ))}
+      </div>
+    )}
+
+    <div class="load-more-wrap" id="load-more-wrap" style={imagesWithUrl.length < 20 ? 'display:none' : ''}>
+      <button class="load-more-btn" id="load-more-btn">Load More</button>
+    </div>
+  </main>
+
+  <script>
+    let currentPage = 1;
+    const grid = document.getElementById('gallery-grid') as HTMLElement | null;
+    const loadMoreBtn = document.getElementById('load-more-btn') as HTMLButtonElement | null;
+    const loadMoreWrap = document.getElementById('load-more-wrap') as HTMLElement | null;
+    const countEl = document.getElementById('img-count') as HTMLElement | null;
+
+    // Copy buttons
+    document.addEventListener('click', async (e) => {
+      const target = e.target as HTMLElement;
+      if (target.classList.contains('copy-btn')) {
+        const value = target.dataset.value ?? '';
+        try {
+          await navigator.clipboard.writeText(value);
+          target.classList.add('copied');
+          const prev = target.textContent;
+          target.textContent = '✓';
+          setTimeout(() => {
+            target.classList.remove('copied');
+            target.textContent = prev;
+          }, 1500);
+        } catch {
+          // clipboard not available (non-HTTPS dev)
+          prompt('Copy this link:', value);
+        }
+      }
+    });
+
+    // Delete buttons
+    document.addEventListener('click', async (e) => {
+      const target = e.target as HTMLElement;
+      if (!target.classList.contains('delete-btn')) return;
+      const id = target.dataset.id;
+      if (!id) return;
+      if (!confirm('Delete this image? This cannot be undone.')) return;
+
+      target.disabled = true;
+      try {
+        const res = await fetch(`/api/images/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          const card = target.closest('.card') as HTMLElement;
+          card?.remove();
+          updateCount(-1);
+          if (!document.querySelector('.card')) {
+            if (loadMoreWrap) loadMoreWrap.style.display = 'none';
+            if (grid) grid.innerHTML = '<div class="empty"><p>No images yet. <a href="/upload">Upload your first image →</a></p></div>';
+          }
+        } else {
+          alert('Delete failed. Please try again.');
+          (target as HTMLButtonElement).disabled = false;
+        }
+      } catch {
+        alert('Network error. Please try again.');
+        (target as HTMLButtonElement).disabled = false;
+      }
+    });
+
+    function updateCount(delta: number) {
+      if (!countEl) return;
+      const match = countEl.textContent?.match(/\d+/);
+      const current = match ? parseInt(match[0], 10) : 0;
+      const next = Math.max(0, current + delta);
+      countEl.textContent = `${next} image${next !== 1 ? 's' : ''}`;
+    }
+
+    // Load More
+    if (loadMoreBtn) {
+      loadMoreBtn.addEventListener('click', async () => {
+        loadMoreBtn.disabled = true;
+        loadMoreBtn.textContent = 'Loading…';
+        currentPage++;
+
+        try {
+          const res = await fetch(`/api/images?page=${currentPage}`);
+          const data = await res.json() as { images: Array<{ id: string; filename: string; url: string; size_bytes: number; width: number | null; height: number | null; uploaded_at: string }> };
+
+          if (data.images.length === 0) {
+            if (loadMoreWrap) loadMoreWrap.style.display = 'none';
+            return;
+          }
+
+          data.images.forEach(img => {
+            const article = document.createElement('article');
+            article.className = 'card';
+            article.dataset.id = img.id;
+
+            const sizeKB = (img.size_bytes / 1024).toFixed(0);
+            const date = new Date(img.uploaded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const dims = img.width && img.height ? `${img.width}×${img.height} · ` : '';
+            const mdLink = `![${img.filename}](${img.url})`;
+            const htmlLink = `<img src="${img.url}" alt="${img.filename}">`;
+
+            article.innerHTML = `
+              <div class="thumb-wrap">
+                <a href="${img.url}" target="_blank" rel="noopener">
+                  <img src="${img.url}" alt="${img.filename}" loading="lazy" />
+                </a>
+              </div>
+              <div class="meta">
+                <div class="filename" title="${img.filename}">${img.filename}</div>
+                <div class="info">${dims}${sizeKB} KB · ${date}</div>
+              </div>
+              <div class="actions">
+                <button class="copy-btn" data-value="${img.url}">Direct</button>
+                <button class="copy-btn" data-value="${mdLink.replace(/"/g, '&quot;')}">MD</button>
+                <button class="copy-btn" data-value="${htmlLink.replace(/"/g, '&quot;')}">HTML</button>
+                <button class="delete-btn" data-id="${img.id}" title="Delete image">✕</button>
+              </div>`;
+
+            grid?.appendChild(article);
+          });
+
+          if (data.images.length < 20) {
+            if (loadMoreWrap) loadMoreWrap.style.display = 'none';
+          } else {
+            loadMoreBtn.disabled = false;
+            loadMoreBtn.textContent = 'Load More';
+          }
+        } catch {
+          loadMoreBtn.disabled = false;
+          loadMoreBtn.textContent = 'Load More';
+        }
+      });
+    }
+
+    document.getElementById('logout-link')!.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await fetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/login';
+    });
+  </script>
+</body>
+</html>

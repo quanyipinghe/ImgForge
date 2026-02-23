@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+.npm/
+
+# Build output
+dist/
+.astro/
+
+# Cloudflare
+.wrangler/
+
+# Secrets — never commit these
+.dev.vars
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# Claude Code / Agent
+.agent/
+.agents/
+.claude/

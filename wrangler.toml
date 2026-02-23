@@ -1,0 +1,13 @@
+name = "imgforge"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "./dist"
+
+[[d1_databases]]
+binding      = "DB"
+database_name = "imgforge-db"
+database_id  = "REPLACE_AFTER_CREATION"
+
+[[r2_buckets]]
+binding     = "BUCKET"
+bucket_name = "imgforge-images"

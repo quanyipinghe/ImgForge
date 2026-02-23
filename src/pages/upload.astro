@@ -1,0 +1,332 @@
+---
+// Protected by middleware
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ImgForge — Upload</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background: #0f0f0f;
+      color: #e0e0e0;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid #2a2a2a;
+      background: #111;
+    }
+    nav .brand { font-weight: 700; font-size: 1.1rem; color: #fff; text-decoration: none; }
+    nav .links a {
+      color: #aaa;
+      text-decoration: none;
+      margin-left: 1.25rem;
+      font-size: 0.9rem;
+      transition: color 0.2s;
+    }
+    nav .links a:hover { color: #fff; }
+    nav .links a.active { color: #6366f1; }
+    main { max-width: 700px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 1.5rem; }
+
+    .drop-zone {
+      border: 2px dashed #333;
+      border-radius: 12px;
+      padding: 3rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .drop-zone.dragover { border-color: #6366f1; background: #1a1a2e; }
+    .drop-zone p { color: #888; margin-top: 0.5rem; font-size: 0.9rem; }
+    .drop-zone .icon { font-size: 2.5rem; }
+    input[type="file"] { display: none; }
+
+    .queue { margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; }
+    .queue-item {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .queue-item img { width: 48px; height: 48px; object-fit: cover; border-radius: 4px; }
+    .queue-item .info { flex: 1; min-width: 0; }
+    .queue-item .name { font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .queue-item .status { font-size: 0.78rem; color: #888; margin-top: 0.2rem; }
+    .queue-item .status.done { color: #4ade80; }
+    .queue-item .status.error { color: #f87171; }
+    .progress { height: 3px; background: #6366f1; border-radius: 2px; margin-top: 0.4rem; transition: width 0.3s; }
+
+    .result-box {
+      margin-top: 0.5rem;
+      background: #111;
+      border: 1px solid #2a2a2a;
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.78rem;
+    }
+    .result-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.3rem;
+    }
+    .result-row:last-child { margin-bottom: 0; }
+    .result-row span { color: #888; min-width: 70px; }
+    .result-row code {
+      flex: 1;
+      background: #1a1a1a;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      color: #c4b5fd;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .copy-btn {
+      padding: 0.2rem 0.5rem;
+      background: #2a2a2a;
+      border: none;
+      border-radius: 4px;
+      color: #aaa;
+      cursor: pointer;
+      font-size: 0.78rem;
+      white-space: nowrap;
+    }
+    .copy-btn:hover { background: #333; color: #fff; }
+
+    .upload-btn {
+      margin-top: 1.5rem;
+      padding: 0.7rem 1.5rem;
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: none;
+    }
+    .upload-btn:hover { background: #4f52cc; }
+    .upload-btn:disabled { background: #333; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a class="brand" href="/gallery">ImgForge</a>
+    <div class="links">
+      <a href="/upload" class="active">Upload</a>
+      <a href="/gallery">Gallery</a>
+      <a href="#" id="logout-link">Logout</a>
+    </div>
+  </nav>
+
+  <main>
+    <h1>Upload Images</h1>
+    <div class="drop-zone" id="drop-zone">
+      <div class="icon">📁</div>
+      <p><strong>Click to select</strong> or drag &amp; drop images here</p>
+      <p>JPEG, PNG, GIF, WebP, AVIF — compressed to max 2 MB before upload</p>
+      <input type="file" id="file-input" accept="image/*" multiple />
+    </div>
+    <div class="queue" id="queue"></div>
+    <button class="upload-btn" id="upload-btn">Upload All</button>
+  </main>
+
+  <script>
+    const dropZone = document.getElementById('drop-zone')!;
+    const fileInput = document.getElementById('file-input') as HTMLInputElement;
+    const queue = document.getElementById('queue')!;
+    const uploadBtn = document.getElementById('upload-btn') as HTMLButtonElement;
+
+    let pendingFiles: File[] = [];
+
+    // Drag and drop
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      const files = Array.from(e.dataTransfer?.files ?? []).filter(f => f.type.startsWith('image/'));
+      addFiles(files);
+    });
+    fileInput.addEventListener('change', () => {
+      const files = Array.from(fileInput.files ?? []);
+      addFiles(files);
+      fileInput.value = '';
+    });
+
+    function addFiles(files: File[]) {
+      if (!files.length) return;
+      pendingFiles.push(...files);
+      files.forEach(f => renderQueueItem(f));
+      uploadBtn.style.display = 'block';
+    }
+
+    function renderQueueItem(file: File) {
+      const item = document.createElement('div');
+      item.className = 'queue-item';
+      item.dataset.filename = file.name;
+
+      const thumb = document.createElement('img');
+      thumb.src = URL.createObjectURL(file);
+      thumb.onload = () => URL.revokeObjectURL(thumb.src);
+
+      const info = document.createElement('div');
+      info.className = 'info';
+      const name = document.createElement('div');
+      name.className = 'name';
+      name.textContent = file.name;
+      const status = document.createElement('div');
+      status.className = 'status';
+      status.textContent = `${(file.size / 1024).toFixed(0)} KB — pending`;
+      const progress = document.createElement('div');
+      progress.className = 'progress';
+      progress.style.width = '0%';
+
+      info.appendChild(name);
+      info.appendChild(status);
+      info.appendChild(progress);
+      item.appendChild(thumb);
+      item.appendChild(info);
+      queue.appendChild(item);
+    }
+
+    // Client-side image compression using Canvas API
+    async function compressImage(file: File): Promise<{ blob: Blob; width: number; height: number }> {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          const MAX_DIM = 2000;
+          const MAX_SIZE = 2 * 1024 * 1024; // 2 MB
+
+          let { naturalWidth: w, naturalHeight: h } = img;
+          if (w > MAX_DIM || h > MAX_DIM) {
+            if (w > h) { h = Math.round((h * MAX_DIM) / w); w = MAX_DIM; }
+            else { w = Math.round((w * MAX_DIM) / h); h = MAX_DIM; }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d')!;
+          ctx.drawImage(img, 0, 0, w, h);
+
+          // Iterative quality reduction for JPEG
+          const tryQuality = (q: number) => {
+            canvas.toBlob((blob) => {
+              if (!blob) { reject(new Error('Canvas toBlob failed')); return; }
+              if (blob.size <= MAX_SIZE || q <= 0.3) {
+                resolve({ blob, width: w, height: h });
+              } else {
+                tryQuality(q - 0.1);
+              }
+            }, 'image/jpeg', q);
+          };
+
+          // For GIF/non-compressible, keep original if small enough
+          if (file.size <= MAX_SIZE && file.type === 'image/gif') {
+            resolve({ blob: file, width: w, height: h });
+          } else {
+            tryQuality(0.85);
+          }
+        };
+        img.onerror = () => reject(new Error('Image load failed'));
+        img.src = url;
+      });
+    }
+
+    uploadBtn.addEventListener('click', async () => {
+      if (!pendingFiles.length) return;
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = 'Uploading…';
+
+      const filesToUpload = [...pendingFiles];
+      pendingFiles = [];
+
+      for (const file of filesToUpload) {
+        const item = [...document.querySelectorAll('.queue-item')]
+          .find(el => (el as HTMLElement).dataset.filename === file.name) as HTMLElement | undefined;
+        const status = item?.querySelector('.status') as HTMLElement | null;
+        const progress = item?.querySelector('.progress') as HTMLElement | null;
+
+        if (status) { status.textContent = 'Compressing…'; }
+        if (progress) progress.style.width = '30%';
+
+        try {
+          const { blob, width, height } = await compressImage(file);
+
+          if (status) status.textContent = 'Uploading…';
+          if (progress) progress.style.width = '60%';
+
+          const fd = new FormData();
+          fd.append('file', blob, file.name);
+          fd.append('filename', file.name);
+          fd.append('width', String(width));
+          fd.append('height', String(height));
+
+          const res = await fetch('/api/images/upload', { method: 'POST', body: fd });
+          if (progress) progress.style.width = '100%';
+
+          if (res.ok) {
+            const data = await res.json() as { url: string; id: string };
+            if (status) {
+              status.className = 'status done';
+              status.textContent = `Uploaded — ${(blob.size / 1024).toFixed(0)} KB`;
+            }
+            // Show result URLs
+            const resultBox = document.createElement('div');
+            resultBox.className = 'result-box';
+            const rows = [
+              { label: 'Direct', value: data.url },
+              { label: 'Markdown', value: `![${file.name}](${data.url})` },
+              { label: 'HTML', value: `<img src="${data.url}" alt="${file.name}">` },
+            ];
+            rows.forEach(({ label, value }) => {
+              const row = document.createElement('div');
+              row.className = 'result-row';
+              row.innerHTML = `<span>${label}</span><code title="${value}">${value}</code><button class="copy-btn">Copy</button>`;
+              row.querySelector('.copy-btn')!.addEventListener('click', async () => {
+                await navigator.clipboard.writeText(value);
+                const btn = row.querySelector('.copy-btn') as HTMLButtonElement;
+                btn.textContent = 'Copied!';
+                setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+              });
+              resultBox.appendChild(row);
+            });
+            item?.appendChild(resultBox);
+          } else {
+            const err = await res.json() as { error?: string };
+            if (status) { status.className = 'status error'; status.textContent = err.error ?? 'Upload failed'; }
+          }
+        } catch (err) {
+          if (status) { status.className = 'status error'; status.textContent = 'Error: ' + String(err); }
+        }
+      }
+
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = 'Upload All';
+      if (!pendingFiles.length) uploadBtn.style.display = 'none';
+    });
+
+    document.getElementById('logout-link')!.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await fetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/login';
+    });
+  </script>
+</body>
+</html>
