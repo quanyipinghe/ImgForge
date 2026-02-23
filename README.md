@@ -26,8 +26,8 @@
 ### 前提条件
 
 - Node.js 18+
-- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/) (`npm install -g wrangler`)
-- Cloudflare 账号
+- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/)（`npm install -g wrangler`）
+- Cloudflare 账号并完成 `wrangler login`
 
 ### 1. 克隆并安装依赖
 
@@ -40,25 +40,36 @@ npm install
 ### 2. 创建 Cloudflare 资源
 
 ```bash
-# 创建 D1 数据库
+# 创建 D1 数据库，记录输出的 database_id
 npx wrangler d1 create imgforge-db
+
+# 创建 R2 存储桶
+npx wrangler r2 bucket create imgforge-images
+
+# 创建 Sessions KV Namespace，记录输出的 id
+npx wrangler kv namespace create SESSION
 ```
 
-将输出的 `database_id` 填入 `wrangler.toml`：
+将三个 ID 填入 `wrangler.toml`：
 
 ```toml
 [[d1_databases]]
 binding      = "DB"
 database_name = "imgforge-db"
-database_id  = "填入此处"   # ← 替换这一行
+database_id  = "填入 D1 database_id"
+
+[[r2_buckets]]
+binding     = "BUCKET"
+bucket_name = "imgforge-images"
+
+[[kv_namespaces]]
+binding = "SESSION"
+id      = "填入 KV namespace id"
 ```
 
 ```bash
 # 初始化本地数据库表结构
 npx wrangler d1 execute imgforge-db --local --file=schema.sql
-
-# 创建 R2 存储桶
-npx wrangler r2 bucket create imgforge-images
 ```
 
 ### 3. 配置本地密钥
@@ -81,9 +92,29 @@ npm run dev
 
 访问 `http://localhost:4321`，使用 `.dev.vars` 中设置的密码登录。
 
-## 生产部署
+---
 
-### 第一步：推送到 GitHub
+## 生产部署（完整流程）
+
+### 第一步：创建 Cloudflare 资源
+
+若尚未创建，执行以下命令并记录各资源 ID：
+
+```bash
+npx wrangler d1 create imgforge-db
+npx wrangler r2 bucket create imgforge-images
+npx wrangler kv namespace create SESSION
+```
+
+将 ID 填入 `wrangler.toml` 后提交推送。
+
+### 第二步：开启 R2 公开访问
+
+1. Dashboard → **R2 Object Storage** → `imgforge-images` → **Settings**
+2. **Public Access** → 点击 **Allow Access**
+3. 复制生成的公开 URL（格式：`https://pub-xxxxxxxx.r2.dev`）
+
+### 第三步：推送到 GitHub
 
 ```bash
 git init
@@ -93,42 +124,63 @@ git remote add origin <your-repo-url>
 git push -u origin main
 ```
 
-### 第二步：Cloudflare Pages 连接仓库
+### 第四步：Cloudflare Pages 连接仓库
 
-1. 进入 [Cloudflare Dashboard](https://dash.cloudflare.com/) → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**
+1. Dashboard → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**
 2. 选择仓库，配置构建参数：
-   - **Build command**: `npm run build`
-   - **Build output directory**: `dist`
+   - **Build command**：`npm run build`
+   - **Build output directory**：`dist`
 
-### 第三步：绑定资源
+### 第五步：在 Dashboard 配置绑定与环境变量
 
-在 Pages 项目的 **Settings → Functions** 中添加绑定：
+Pages 项目 → **Settings → Functions**，添加以下绑定：
 
 | 类型 | 变量名 | 资源 |
 |---|---|---|
 | D1 Database | `DB` | `imgforge-db` |
 | R2 Bucket | `BUCKET` | `imgforge-images` |
+| KV Namespace | `SESSION` | `SESSION`（刚创建的） |
 
-在 **Settings → Environment variables** 中添加密钥：
+Pages 项目 → **Settings → Environment variables**，添加以下密钥（Production 环境）：
 
 | 变量名 | 值 |
 |---|---|
 | `UPLOAD_PASSWORD` | 你的登录密码 |
-| `AUTH_SECRET` | 32位以上随机字符串 |
-| `R2_PUBLIC_URL` | R2 公开访问 URL |
+| `AUTH_SECRET` | 32 位以上随机字符串 |
+| `R2_PUBLIC_URL` | 第二步复制的 R2 公开 URL |
 
-### 第四步：初始化生产数据库
+### 第六步：初始化生产数据库
+
+**必须执行**，否则 gallery 页面会报 500 错误：
 
 ```bash
 npx wrangler d1 execute imgforge-db --file=schema.sql
 ```
 
-### 第五步：开启 R2 公开访问
+### 第七步：触发重新部署
 
-1. Cloudflare Dashboard → **R2** → `imgforge-images` → **Settings**
-2. 开启 **Public Access**，复制生成的 `https://pub-xxxxxxxx.r2.dev` URL
-3. 将此 URL 填入 Pages 的 `R2_PUBLIC_URL` 环境变量
-4. 重新触发部署（推送一次提交或在 Dashboard 点击 Retry）
+配置完成后需重新部署：
+
+- 在 Pages 项目页面点击最近一次部署 → **Retry deployment**
+- 或推送一个空提交：
+
+```bash
+git commit --allow-empty -m "chore: redeploy" && git push
+```
+
+---
+
+## 自定义域名
+
+**Pages 绑定自定义域名**（无需改代码）：
+Dashboard → Pages → ImgForge → **Custom domains** → Add → 填入域名
+
+**R2 图片 URL 使用自定义域名**（可选）：
+1. Dashboard → R2 → `imgforge-images` → **Settings → Custom Domains** → 添加子域名
+2. 将 `R2_PUBLIC_URL` 环境变量改为该子域名（如 `https://img.yourdomain.com`）
+3. 重新部署生效
+
+---
 
 ## 项目结构
 
@@ -136,7 +188,7 @@ npx wrangler d1 execute imgforge-db --file=schema.sql
 ImgForge/
 ├── .dev.vars                        # 本地密钥（已 gitignore）
 ├── .gitignore
-├── wrangler.toml                    # R2 + D1 绑定配置
+├── wrangler.toml                    # R2 + D1 + KV 绑定配置
 ├── schema.sql                       # D1 建表语句
 ├── astro.config.mjs
 ├── package.json
@@ -174,6 +226,7 @@ ImgForge/
 | D1 读取 | 500 万次/天 | 元数据查询 |
 | D1 写入 | 10 万次/天 | 每次上传/删除 1 次 |
 | Pages Functions | 10 万次请求/天 | API 调用 |
+| KV 读取 | 10 万次/天 | Sessions（未实际使用） |
 
 ## 常用命令
 
