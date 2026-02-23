@@ -11,3 +11,7 @@ database_id  = "6c735234-e325-4376-8b32-3adc17a6b775"
 [[r2_buckets]]
 binding     = "BUCKET"
 bucket_name = "imgforge-images"
+
+[[kv_namespaces]]
+binding = "SESSION"
+id      = "1a0a53c2fd6547bd8f94b7d221e21cc0"
