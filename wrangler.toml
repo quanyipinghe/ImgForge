@@ -6,7 +6,7 @@ pages_build_output_dir = "./dist"
 [[d1_databases]]
 binding      = "DB"
 database_name = "imgforge-db"
-database_id  = "REPLACE_AFTER_CREATION"
+database_id  = "6c735234-e325-4376-8b32-3adc17a6b775"
 
 [[r2_buckets]]
 binding     = "BUCKET"
