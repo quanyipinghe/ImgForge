@@ -11,114 +11,234 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       min-height: 100vh;
-      background: #0f0f0f;
+      background: #0a0a0a;
       color: #e0e0e0;
       font-family: system-ui, -apple-system, sans-serif;
     }
+
+    /* ── Nav ── */
     nav {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 1rem 1.5rem;
-      border-bottom: 1px solid #2a2a2a;
+      border-bottom: 1px solid #1f1f1f;
       background: #111;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(8px);
     }
-    nav .brand { font-weight: 700; font-size: 1.1rem; color: #fff; text-decoration: none; }
+    nav .brand { font-weight: 700; font-size: 1.1rem; color: #fff; text-decoration: none; letter-spacing: -0.02em; }
     nav .links a {
-      color: #aaa;
+      color: #666;
       text-decoration: none;
-      margin-left: 1.25rem;
-      font-size: 0.9rem;
-      transition: color 0.2s;
+      margin-left: 1.5rem;
+      font-size: 0.875rem;
+      transition: color 0.15s;
     }
-    nav .links a:hover { color: #fff; }
-    nav .links a.active { color: #6366f1; }
-    main { max-width: 700px; margin: 2rem auto; padding: 0 1rem; }
-    h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 1.5rem; }
+    nav .links a:hover { color: #e0e0e0; }
+    nav .links a.active { color: #818cf8; }
 
+    /* ── Layout ── */
+    main { max-width: 860px; margin: 2.5rem auto; padding: 0 1.25rem 4rem; }
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.75rem;
+      color: #f5f5f5;
+    }
+
+    /* ── Drop Zone ── */
     .drop-zone {
-      border: 2px dashed #333;
-      border-radius: 12px;
-      padding: 3rem 1.5rem;
+      position: relative;
+      border: 1.5px dashed #2e2e2e;
+      border-radius: 16px;
+      padding: 3.5rem 2rem;
       text-align: center;
       cursor: pointer;
       transition: border-color 0.2s, background 0.2s;
+      background: #111;
+      overflow: hidden;
     }
-    .drop-zone.dragover { border-color: #6366f1; background: #1a1a2e; }
-    .drop-zone p { color: #888; margin-top: 0.5rem; font-size: 0.9rem; }
-    .drop-zone .icon { font-size: 2.5rem; }
+    .drop-zone::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .drop-zone:hover { border-color: #444; background: #131313; }
+    .drop-zone.dragover {
+      border-color: #6366f1;
+      background: #13132a;
+    }
+    .drop-zone.dragover::before {
+      background: radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.18) 0%, transparent 70%);
+    }
+    .drop-icon {
+      width: 52px;
+      height: 52px;
+      margin: 0 auto 1rem;
+      background: #1e1e1e;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #2a2a2a;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .drop-zone.dragover .drop-icon { background: #1e1e3a; border-color: #4f52cc; }
+    .drop-icon svg { width: 24px; height: 24px; color: #818cf8; }
+    .drop-zone h2 { font-size: 1rem; font-weight: 600; color: #e0e0e0; margin-bottom: 0.35rem; }
+    .drop-zone p { color: #555; font-size: 0.82rem; }
+    .drop-zone .hint { margin-top: 0.6rem; font-size: 0.78rem; color: #3a3a3a; }
     input[type="file"] { display: none; }
 
-    .queue { margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; }
-    .queue-item {
-      background: #1a1a1a;
-      border: 1px solid #2a2a2a;
-      border-radius: 8px;
-      padding: 0.75rem 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
+    /* ── Upload Button ── */
+    .upload-btn {
+      display: none;
+      margin-top: 1.5rem;
+      width: 100%;
+      padding: 0.8rem 1rem;
+      background: linear-gradient(135deg, #6366f1, #818cf8);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.01em;
+      transition: opacity 0.2s, transform 0.15s;
+      position: relative;
+      overflow: hidden;
     }
-    .queue-item img { width: 48px; height: 48px; object-fit: cover; border-radius: 4px; }
-    .queue-item .info { flex: 1; min-width: 0; }
-    .queue-item .name { font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .queue-item .status { font-size: 0.78rem; color: #888; margin-top: 0.2rem; }
-    .queue-item .status.done { color: #4ade80; }
-    .queue-item .status.error { color: #f87171; }
-    .progress { height: 3px; background: #6366f1; border-radius: 2px; margin-top: 0.4rem; transition: width 0.3s; }
+    .upload-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.08), transparent);
+      pointer-events: none;
+    }
+    .upload-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+    .upload-btn:active:not(:disabled) { transform: translateY(0); }
+    .upload-btn:disabled { background: #222; color: #444; cursor: not-allowed; transform: none; }
 
-    .result-box {
-      margin-top: 0.5rem;
+    /* ── Card Grid ── */
+    .queue {
+      margin-top: 1.75rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1rem;
+    }
+
+    /* ── Card ── */
+    .queue-card {
       background: #111;
-      border: 1px solid #2a2a2a;
-      border-radius: 6px;
-      padding: 0.5rem 0.75rem;
-      font-size: 0.78rem;
-    }
-    .result-row {
+      border: 1px solid #1f1f1f;
+      border-radius: 12px;
+      overflow: hidden;
       display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.3rem;
+      flex-direction: column;
+      animation: cardIn 0.25s ease both;
+      transition: border-color 0.2s;
     }
-    .result-row:last-child { margin-bottom: 0; }
-    .result-row span { color: #888; min-width: 70px; }
-    .result-row code {
-      flex: 1;
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(10px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .card-thumb {
+      width: 100%;
+      aspect-ratio: 4/3;
+      object-fit: cover;
+      display: block;
+      background: #0f0f0f;
+    }
+
+    /* Progress bar — sits right below thumb */
+    .card-progress-track {
+      height: 3px;
       background: #1a1a1a;
-      padding: 0.2rem 0.4rem;
-      border-radius: 4px;
-      color: #c4b5fd;
+    }
+    .card-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #6366f1, #a5b4fc);
+      transition: width 0.4s ease;
+      border-radius: 0 2px 2px 0;
+    }
+
+    .card-body { padding: 0.7rem 0.85rem; flex: 1; display: flex; flex-direction: column; gap: 0.35rem; }
+    .card-name {
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: #ccc;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .copy-btn {
+    .card-meta { font-size: 0.75rem; color: #444; }
+    .card-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.73rem;
+      font-weight: 500;
       padding: 0.2rem 0.5rem;
-      background: #2a2a2a;
-      border: none;
-      border-radius: 4px;
-      color: #aaa;
+      border-radius: 20px;
+      align-self: flex-start;
+      margin-top: 0.1rem;
+    }
+    .card-status.pending  { background: #1e1e1e; color: #555; }
+    .card-status.working  { background: #1a1a30; color: #818cf8; }
+    .card-status.done     { background: #0f2a1a; color: #4ade80; border: 1px solid #1a4a2a; }
+    .card-status.error    { background: #2a0f0f; color: #f87171; border: 1px solid #4a1a1a; }
+
+    /* ── Result URLs (shown after upload success) ── */
+    .result-urls {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.65rem 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+    .url-row {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .url-label {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: #444;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      min-width: 34px;
+    }
+    .url-value {
+      flex: 1;
+      font-size: 0.72rem;
+      color: #818cf8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-family: ui-monospace, monospace;
+    }
+    .url-copy {
+      flex-shrink: 0;
+      padding: 0.2rem 0.45rem;
+      background: #1a1a1a;
+      border: 1px solid #252525;
+      border-radius: 5px;
+      color: #666;
+      font-size: 0.68rem;
       cursor: pointer;
-      font-size: 0.78rem;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
       white-space: nowrap;
     }
-    .copy-btn:hover { background: #333; color: #fff; }
-
-    .upload-btn {
-      margin-top: 1.5rem;
-      padding: 0.7rem 1.5rem;
-      background: #6366f1;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      display: none;
-    }
-    .upload-btn:hover { background: #4f52cc; }
-    .upload-btn:disabled { background: #333; cursor: not-allowed; }
+    .url-copy:hover { background: #222; color: #aaa; border-color: #333; }
+    .url-copy.copied { background: #0f2a1a; color: #4ade80; border-color: #1a4a2a; }
   </style>
 </head>
 <body>
@@ -132,13 +252,21 @@
   </nav>
 
   <main>
-    <h1>Upload Images</h1>
+    <h1 class="page-title">Upload Images</h1>
+
     <div class="drop-zone" id="drop-zone">
-      <div class="icon">📁</div>
-      <p><strong>Click to select</strong> or drag &amp; drop images here</p>
-      <p>JPEG, PNG, GIF, WebP, AVIF — compressed to max 2 MB before upload</p>
+      <div class="drop-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 16V4m0 0L8 8m4-4 4 4"/>
+          <path d="M20 16.7A5 5 0 0 1 15 21H9a5 5 0 0 1-5-4.3"/>
+        </svg>
+      </div>
+      <h2>Click to select or drag &amp; drop</h2>
+      <p>JPEG · PNG · GIF · WebP · AVIF</p>
+      <p class="hint">Auto-compressed to max 2000 px / 2 MB before upload</p>
       <input type="file" id="file-input" accept="image/*" multiple />
     </div>
+
     <div class="queue" id="queue"></div>
     <button class="upload-btn" id="upload-btn">Upload All</button>
   </main>
@@ -150,11 +278,14 @@
     const uploadBtn = document.getElementById('upload-btn') as HTMLButtonElement;
 
     let pendingFiles: File[] = [];
+    // Map filename → card element (supports multiple files with same name by index)
+    const cardMap = new Map<File, HTMLElement>();
 
-    // Drag and drop
     dropZone.addEventListener('click', () => fileInput.click());
     dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
-    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('dragleave', (e) => {
+      if (!dropZone.contains(e.relatedTarget as Node)) dropZone.classList.remove('dragover');
+    });
     dropZone.addEventListener('drop', (e) => {
       e.preventDefault();
       dropZone.classList.remove('dragover');
@@ -162,48 +293,124 @@
       addFiles(files);
     });
     fileInput.addEventListener('change', () => {
-      const files = Array.from(fileInput.files ?? []);
-      addFiles(files);
+      addFiles(Array.from(fileInput.files ?? []));
       fileInput.value = '';
     });
 
     function addFiles(files: File[]) {
       if (!files.length) return;
       pendingFiles.push(...files);
-      files.forEach(f => renderQueueItem(f));
+      files.forEach(f => {
+        const card = renderCard(f);
+        cardMap.set(f, card);
+      });
       uploadBtn.style.display = 'block';
     }
 
-    function renderQueueItem(file: File) {
-      const item = document.createElement('div');
-      item.className = 'queue-item';
-      item.dataset.filename = file.name;
+    function renderCard(file: File): HTMLElement {
+      const card = document.createElement('div');
+      card.className = 'queue-card';
 
+      // Thumbnail
       const thumb = document.createElement('img');
-      thumb.src = URL.createObjectURL(file);
-      thumb.onload = () => URL.revokeObjectURL(thumb.src);
+      thumb.className = 'card-thumb';
+      const objUrl = URL.createObjectURL(file);
+      thumb.src = objUrl;
+      thumb.alt = file.name;
+      thumb.onload = () => URL.revokeObjectURL(objUrl);
 
-      const info = document.createElement('div');
-      info.className = 'info';
+      // Progress track
+      const track = document.createElement('div');
+      track.className = 'card-progress-track';
+      const bar = document.createElement('div');
+      bar.className = 'card-progress-bar';
+      track.appendChild(bar);
+
+      // Body
+      const body = document.createElement('div');
+      body.className = 'card-body';
+
       const name = document.createElement('div');
-      name.className = 'name';
+      name.className = 'card-name';
+      name.title = file.name;
       name.textContent = file.name;
-      const status = document.createElement('div');
-      status.className = 'status';
-      status.textContent = `${(file.size / 1024).toFixed(0)} KB — pending`;
-      const progress = document.createElement('div');
-      progress.className = 'progress';
-      progress.style.width = '0%';
 
-      info.appendChild(name);
-      info.appendChild(status);
-      info.appendChild(progress);
-      item.appendChild(thumb);
-      item.appendChild(info);
-      queue.appendChild(item);
+      const meta = document.createElement('div');
+      meta.className = 'card-meta';
+      meta.textContent = `${(file.size / 1024).toFixed(0)} KB`;
+
+      const status = document.createElement('div');
+      status.className = 'card-status pending';
+      status.textContent = 'Pending';
+
+      body.appendChild(name);
+      body.appendChild(meta);
+      body.appendChild(status);
+
+      card.appendChild(thumb);
+      card.appendChild(track);
+      card.appendChild(body);
+      queue.appendChild(card);
+      return card;
     }
 
-    // Client-side image compression using Canvas API
+    function setCardStatus(card: HTMLElement, state: 'pending'|'working'|'done'|'error', text: string) {
+      const el = card.querySelector('.card-status') as HTMLElement;
+      el.className = `card-status ${state}`;
+      const icons: Record<string, string> = {
+        pending: '', working: '⟳ ', done: '✓ ', error: '✕ '
+      };
+      el.textContent = icons[state] + text;
+    }
+
+    function setProgress(card: HTMLElement, pct: number) {
+      const bar = card.querySelector('.card-progress-bar') as HTMLElement;
+      bar.style.width = `${pct}%`;
+    }
+
+    function showResultUrls(card: HTMLElement, url: string, filename: string) {
+      const links = [
+        { label: 'URL', value: url },
+        { label: 'MD',  value: `![${filename}](${url})` },
+        { label: 'IMG', value: `<img src="${url}" alt="${filename}">` },
+      ];
+
+      const box = document.createElement('div');
+      box.className = 'result-urls';
+
+      links.forEach(({ label, value }) => {
+        const row = document.createElement('div');
+        row.className = 'url-row';
+
+        const lbl = document.createElement('span');
+        lbl.className = 'url-label';
+        lbl.textContent = label;
+
+        const val = document.createElement('span');
+        val.className = 'url-value';
+        val.title = value;
+        val.textContent = value;
+
+        const btn = document.createElement('button');
+        btn.className = 'url-copy';
+        btn.textContent = 'Copy';
+        btn.addEventListener('click', async () => {
+          try { await navigator.clipboard.writeText(value); }
+          catch { prompt('Copy:', value); return; }
+          btn.textContent = 'Copied!';
+          btn.classList.add('copied');
+          setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
+        });
+
+        row.appendChild(lbl);
+        row.appendChild(val);
+        row.appendChild(btn);
+        box.appendChild(row);
+      });
+
+      card.appendChild(box);
+    }
+
     async function compressImage(file: File): Promise<{ blob: Blob; width: number; height: number }> {
       return new Promise((resolve, reject) => {
         const img = new Image();
@@ -211,38 +418,24 @@
         img.onload = () => {
           URL.revokeObjectURL(url);
           const MAX_DIM = 2000;
-          const MAX_SIZE = 2 * 1024 * 1024; // 2 MB
-
+          const MAX_SIZE = 2 * 1024 * 1024;
           let { naturalWidth: w, naturalHeight: h } = img;
           if (w > MAX_DIM || h > MAX_DIM) {
             if (w > h) { h = Math.round((h * MAX_DIM) / w); w = MAX_DIM; }
             else { w = Math.round((w * MAX_DIM) / h); h = MAX_DIM; }
           }
-
           const canvas = document.createElement('canvas');
-          canvas.width = w;
-          canvas.height = h;
-          const ctx = canvas.getContext('2d')!;
-          ctx.drawImage(img, 0, 0, w, h);
-
-          // Iterative quality reduction for JPEG
-          const tryQuality = (q: number) => {
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
+          const tryQ = (q: number) => {
             canvas.toBlob((blob) => {
-              if (!blob) { reject(new Error('Canvas toBlob failed')); return; }
-              if (blob.size <= MAX_SIZE || q <= 0.3) {
-                resolve({ blob, width: w, height: h });
-              } else {
-                tryQuality(q - 0.1);
-              }
+              if (!blob) { reject(new Error('toBlob failed')); return; }
+              if (blob.size <= MAX_SIZE || q <= 0.3) resolve({ blob, width: w, height: h });
+              else tryQ(q - 0.1);
             }, 'image/jpeg', q);
           };
-
-          // For GIF/non-compressible, keep original if small enough
-          if (file.size <= MAX_SIZE && file.type === 'image/gif') {
-            resolve({ blob: file, width: w, height: h });
-          } else {
-            tryQuality(0.85);
-          }
+          if (file.size <= MAX_SIZE && file.type === 'image/gif') resolve({ blob: file, width: w, height: h });
+          else tryQ(0.85);
         };
         img.onerror = () => reject(new Error('Image load failed'));
         img.src = url;
@@ -258,19 +451,16 @@
       pendingFiles = [];
 
       for (const file of filesToUpload) {
-        const item = [...document.querySelectorAll('.queue-item')]
-          .find(el => (el as HTMLElement).dataset.filename === file.name) as HTMLElement | undefined;
-        const status = item?.querySelector('.status') as HTMLElement | null;
-        const progress = item?.querySelector('.progress') as HTMLElement | null;
+        const card = cardMap.get(file);
+        if (!card) continue;
 
-        if (status) { status.textContent = 'Compressing…'; }
-        if (progress) progress.style.width = '30%';
+        setCardStatus(card, 'working', 'Compressing…');
+        setProgress(card, 20);
 
         try {
           const { blob, width, height } = await compressImage(file);
-
-          if (status) status.textContent = 'Uploading…';
-          if (progress) progress.style.width = '60%';
+          setCardStatus(card, 'working', 'Uploading…');
+          setProgress(card, 55);
 
           const fd = new FormData();
           fd.append('file', blob, file.name);
@@ -279,41 +469,22 @@
           fd.append('height', String(height));
 
           const res = await fetch('/api/images/upload', { method: 'POST', body: fd });
-          if (progress) progress.style.width = '100%';
+          setProgress(card, 100);
 
           if (res.ok) {
             const data = await res.json() as { url: string; id: string };
-            if (status) {
-              status.className = 'status done';
-              status.textContent = `Uploaded — ${(blob.size / 1024).toFixed(0)} KB`;
-            }
-            // Show result URLs
-            const resultBox = document.createElement('div');
-            resultBox.className = 'result-box';
-            const rows = [
-              { label: 'Direct', value: data.url },
-              { label: 'Markdown', value: `![${file.name}](${data.url})` },
-              { label: 'HTML', value: `<img src="${data.url}" alt="${file.name}">` },
-            ];
-            rows.forEach(({ label, value }) => {
-              const row = document.createElement('div');
-              row.className = 'result-row';
-              row.innerHTML = `<span>${label}</span><code title="${value}">${value}</code><button class="copy-btn">Copy</button>`;
-              row.querySelector('.copy-btn')!.addEventListener('click', async () => {
-                await navigator.clipboard.writeText(value);
-                const btn = row.querySelector('.copy-btn') as HTMLButtonElement;
-                btn.textContent = 'Copied!';
-                setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
-              });
-              resultBox.appendChild(row);
-            });
-            item?.appendChild(resultBox);
+            const compressed = `${(blob.size / 1024).toFixed(0)} KB`;
+            setCardStatus(card, 'done', `Done · ${compressed}`);
+            card.style.borderColor = '#1a4a2a';
+            showResultUrls(card, data.url, file.name);
           } else {
             const err = await res.json() as { error?: string };
-            if (status) { status.className = 'status error'; status.textContent = err.error ?? 'Upload failed'; }
+            setCardStatus(card, 'error', err.error ?? 'Upload failed');
+            card.style.borderColor = '#4a1a1a';
           }
-        } catch (err) {
-          if (status) { status.className = 'status error'; status.textContent = 'Error: ' + String(err); }
+        } catch (e) {
+          setCardStatus(card, 'error', String(e));
+          card.style.borderColor = '#4a1a1a';
         }
       }
 
