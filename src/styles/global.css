@@ -1,0 +1,61 @@
+/* src/styles/global.css */
+
+/* ── Light Mode (Default) ── */
+:root {
+  --bg-main: #fcfcfc;
+  --bg-nav: #ffffff;
+  --bg-card: #ffffff;
+  --bg-input: #ffffff;
+  --bg-card-hover: #f9fafb;
+  --bg-btn-secondary: #f3f4f6;
+  --bg-btn-secondary-hover: #e5e7eb;
+  
+  --border-color: #e5e7eb;
+  --border-hover: #d1d5db;
+  --border-focus: #6366f1;
+
+  --text-main: #111827;
+  --text-muted: #6b7280;
+  --text-inverse: #ffffff;
+
+  --drop-zone-bg: #f9fafb;
+  --drop-zone-bg-hover: #f3f4f6;
+  --drop-zone-icon-bg: #ffffff;
+
+  --primary-color: #6366f1;
+  --primary-hover: #4f52cc;
+  
+  --danger-color: #ef4444;
+  --success-color: #10b981;
+}
+
+/* ── Dark Mode ── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-main: #0a0a0a;
+    --bg-nav: #111111;
+    --bg-card: #141414;
+    --bg-input: #111111;
+    --bg-card-hover: #1f1f1f;
+    --bg-btn-secondary: #1e1e1e;
+    --bg-btn-secondary-hover: #2a2a2a;
+    
+    --border-color: #2a2a2a;
+    --border-hover: #444444;
+    --border-focus: #818cf8;
+
+    --text-main: #e0e0e0;
+    --text-muted: #888888;
+    --text-inverse: #ffffff;
+
+    --drop-zone-bg: #111111;
+    --drop-zone-bg-hover: #131313;
+    --drop-zone-icon-bg: #1e1e1e;
+
+    --primary-color: #6366f1;
+    --primary-hover: #4f52cc;
+
+    --danger-color: #f87171;
+    --success-color: #4ade80;
+  }
+}

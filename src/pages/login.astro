@@ -1,4 +1,6 @@
 ---
+import '../styles/global.css';
+
 // If already authenticated, redirect to gallery
 if (Astro.locals.isAuthenticated) {
   return Astro.redirect('/gallery');
@@ -18,13 +20,13 @@ if (Astro.locals.isAuthenticated) {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #0f0f0f;
-      color: #e0e0e0;
+      background: var(--bg-main);
+      color: var(--text-main);
       font-family: system-ui, -apple-system, sans-serif;
     }
     .card {
-      background: #1a1a1a;
-      border: 1px solid #2a2a2a;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
       border-radius: 12px;
       padding: 2.5rem 2rem;
       width: min(380px, 95vw);
@@ -33,27 +35,27 @@ if (Astro.locals.isAuthenticated) {
       font-size: 1.5rem;
       font-weight: 700;
       margin-bottom: 0.25rem;
-      color: #fff;
+      color: var(--text-main);
     }
-    p { color: #888; font-size: 0.9rem; margin-bottom: 1.75rem; }
-    label { display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 0.4rem; }
+    p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.75rem; }
+    label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; }
     input[type="password"] {
       width: 100%;
       padding: 0.65rem 0.9rem;
-      background: #111;
-      border: 1px solid #333;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
       border-radius: 8px;
-      color: #e0e0e0;
+      color: var(--text-main);
       font-size: 1rem;
       outline: none;
       transition: border-color 0.2s;
     }
-    input[type="password"]:focus { border-color: #6366f1; }
+    input[type="password"]:focus { border-color: var(--border-focus); }
     button {
       margin-top: 1.25rem;
       width: 100%;
       padding: 0.7rem;
-      background: #6366f1;
+      background: var(--primary-color);
       color: #fff;
       border: none;
       border-radius: 8px;
@@ -62,11 +64,11 @@ if (Astro.locals.isAuthenticated) {
       cursor: pointer;
       transition: background 0.2s;
     }
-    button:hover { background: #4f52cc; }
-    button:disabled { background: #333; cursor: not-allowed; }
+    button:hover { background: var(--primary-hover); }
+    button:disabled { background: var(--bg-btn-secondary); color: var(--text-muted); cursor: not-allowed; }
     .error {
       margin-top: 0.85rem;
-      color: #f87171;
+      color: var(--danger-color);
       font-size: 0.85rem;
       display: none;
     }

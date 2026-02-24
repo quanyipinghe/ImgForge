@@ -1,4 +1,5 @@
 ---
+import '../styles/global.css';
 import ImageCard from '../components/ImageCard.astro';
 import { listImages } from '../lib/db';
 
@@ -22,8 +23,8 @@ const imagesWithUrl = initialImages.map(img => ({
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       min-height: 100vh;
-      background: #0f0f0f;
-      color: #e0e0e0;
+      background: var(--bg-main);
+      color: var(--text-main);
       font-family: system-ui, -apple-system, sans-serif;
     }
     nav {
@@ -31,19 +32,19 @@ const imagesWithUrl = initialImages.map(img => ({
       align-items: center;
       justify-content: space-between;
       padding: 1rem 1.5rem;
-      border-bottom: 1px solid #2a2a2a;
-      background: #111;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-nav);
     }
-    nav .brand { font-weight: 700; font-size: 1.1rem; color: #fff; text-decoration: none; }
+    nav .brand { font-weight: 700; font-size: 1.1rem; color: var(--text-main); text-decoration: none; }
     nav .links a {
-      color: #aaa;
+      color: var(--text-muted);
       text-decoration: none;
       margin-left: 1.25rem;
       font-size: 0.9rem;
       transition: color 0.2s;
     }
-    nav .links a:hover { color: #fff; }
-    nav .links a.active { color: #6366f1; }
+    nav .links a:hover { color: var(--text-main); }
+    nav .links a.active { color: var(--primary-color); }
     main { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
     .page-header {
       display: flex;
@@ -52,7 +53,7 @@ const imagesWithUrl = initialImages.map(img => ({
       margin-bottom: 1.5rem;
     }
     h1 { font-size: 1.4rem; font-weight: 700; }
-    .count { color: #888; font-size: 0.9rem; }
+    .count { color: var(--text-muted); font-size: 0.9rem; }
 
     .grid {
       display: grid;
@@ -61,22 +62,22 @@ const imagesWithUrl = initialImages.map(img => ({
     }
     .empty {
       text-align: center;
-      color: #555;
+      color: var(--text-muted);
       padding: 4rem 1rem;
     }
-    .empty a { color: #6366f1; text-decoration: none; }
+    .empty a { color: var(--primary-color); text-decoration: none; }
     .load-more-wrap { text-align: center; margin-top: 2rem; padding-bottom: 3rem; }
     .load-more-btn {
       padding: 0.65rem 2rem;
-      background: #1a1a1a;
-      border: 1px solid #333;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
       border-radius: 8px;
-      color: #aaa;
+      color: var(--text-muted);
       cursor: pointer;
       font-size: 0.95rem;
       transition: background 0.2s, color 0.2s;
     }
-    .load-more-btn:hover { background: #252525; color: #fff; }
+    .load-more-btn:hover { background: var(--bg-card-hover); color: var(--text-main); }
     .load-more-btn:disabled { opacity: 0.4; cursor: not-allowed; }
   </style>
 </head>

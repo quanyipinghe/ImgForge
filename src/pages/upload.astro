@@ -1,4 +1,6 @@
 ---
+import '../styles/global.css';
+
 // Protected by middleware
 ---
 <!DOCTYPE html>
@@ -12,8 +14,8 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       min-height: 100vh;
-      background: #0a0a0a;
-      color: #e0e0e0;
+      background: var(--bg-main);
+      color: var(--text-main);
       font-family: system-ui, -apple-system, sans-serif;
     }
 
@@ -23,23 +25,23 @@
       align-items: center;
       justify-content: space-between;
       padding: 1rem 1.5rem;
-      border-bottom: 1px solid #1f1f1f;
-      background: #111;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-nav);
       position: sticky;
       top: 0;
       z-index: 10;
       backdrop-filter: blur(8px);
     }
-    nav .brand { font-weight: 700; font-size: 1.1rem; color: #fff; text-decoration: none; letter-spacing: -0.02em; }
+    nav .brand { font-weight: 700; font-size: 1.1rem; color: var(--text-main); text-decoration: none; letter-spacing: -0.02em; }
     nav .links a {
-      color: #666;
+      color: var(--text-muted);
       text-decoration: none;
       margin-left: 1.5rem;
       font-size: 0.875rem;
       transition: color 0.15s;
     }
-    nav .links a:hover { color: #e0e0e0; }
-    nav .links a.active { color: #818cf8; }
+    nav .links a:hover { color: var(--text-main); }
+    nav .links a.active { color: var(--primary-color); }
 
     /* ── Layout ── */
     main { max-width: 860px; margin: 2.5rem auto; padding: 0 1.25rem 6rem; position: relative; }
@@ -53,14 +55,14 @@
       font-size: 1.5rem;
       font-weight: 700;
       letter-spacing: -0.03em;
-      color: #f5f5f5;
+      color: var(--text-main);
     }
 
     /* ── Full Screen Drag Overlay ── */
     #drag-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(10, 10, 10, 0.85);
+      background: rgba(0, 0, 0, 0.7);
       backdrop-filter: blur(4px);
       z-index: 9999;
       display: flex;
@@ -75,19 +77,19 @@
     #drag-overlay.active {
       opacity: 1;
     }
-    #drag-overlay svg { width: 64px; height: 64px; color: #818cf8; margin-bottom: 1rem; }
+    #drag-overlay svg { width: 64px; height: 64px; color: var(--primary-color); margin-bottom: 1rem; }
     #drag-overlay h2 { color: #fff; font-size: 1.5rem; font-weight: 600; }
 
     /* ── Drop Zone ── */
     .drop-zone {
       position: relative;
-      border: 1.5px dashed #2e2e2e;
+      border: 1.5px dashed var(--border-color);
       border-radius: 16px;
       padding: 3.5rem 2rem;
       text-align: center;
       cursor: pointer;
       transition: border-color 0.2s, background 0.2s;
-      background: #111;
+      background: var(--drop-zone-bg);
       overflow: hidden;
     }
     .drop-zone::before {
@@ -97,23 +99,23 @@
       background: radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.07) 0%, transparent 70%);
       pointer-events: none;
     }
-    .drop-zone:hover { border-color: #444; background: #131313; }
+    .drop-zone:hover { border-color: var(--border-hover); background: var(--drop-zone-bg-hover); }
     .drop-icon {
       width: 52px;
       height: 52px;
       margin: 0 auto 1rem;
-      background: #1e1e1e;
+      background: var(--drop-zone-icon-bg);
       border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 1px solid #2a2a2a;
+      border: 1px solid var(--border-color);
       transition: background 0.2s, border-color 0.2s;
     }
-    .drop-icon svg { width: 24px; height: 24px; color: #818cf8; }
-    .drop-zone h2 { font-size: 1rem; font-weight: 600; color: #e0e0e0; margin-bottom: 0.35rem; }
-    .drop-zone p { color: #555; font-size: 0.82rem; }
-    .drop-zone .hint { margin-top: 0.6rem; font-size: 0.78rem; color: #3a3a3a; }
+    .drop-icon svg { width: 24px; height: 24px; color: var(--primary-color); }
+    .drop-zone h2 { font-size: 1rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.35rem; }
+    .drop-zone p { color: var(--text-muted); font-size: 0.82rem; }
+    .drop-zone .hint { margin-top: 0.6rem; font-size: 0.78rem; color: var(--text-muted); opacity: 0.8; }
     input[type="file"] { display: none; }
 
     /* ── Sticky Actions ── */
@@ -141,19 +143,19 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.4);
     }
     .upload-btn {
-      background: linear-gradient(135deg, #6366f1, #818cf8);
+      background: linear-gradient(135deg, var(--primary-color), #818cf8);
       color: #fff;
     }
     .upload-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(99,102,241,0.4); }
     .upload-btn:active:not(:disabled) { transform: translateY(0); }
-    .upload-btn:disabled { background: #222; color: #444; cursor: not-allowed; transform: none; box-shadow: none; }
+    .upload-btn:disabled { background: var(--bg-btn-secondary); color: var(--text-muted); cursor: not-allowed; transform: none; box-shadow: none; }
 
     .copy-all-btn {
-      background: #1e1e1e;
-      color: #e0e0e0;
-      border: 1px solid #333 !important;
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--border-color) !important;
     }
-    .copy-all-btn:hover { background: #2a2a2a; color: #fff; border-color: #444 !important; }
+    .copy-all-btn:hover { background: var(--bg-card-hover); border-color: var(--border-hover) !important; }
 
     /* ── Card Grid ── */
     .queue {
@@ -165,8 +167,8 @@
 
     /* ── Card ── */
     .queue-card {
-      background: #111;
-      border: 1px solid #1f1f1f;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
       border-radius: 12px;
       overflow: hidden;
       display: flex;
@@ -208,13 +210,13 @@
       aspect-ratio: 4/3;
       object-fit: cover;
       display: block;
-      background: #0f0f0f;
+      background: var(--bg-main);
     }
 
     /* Progress bar */
     .card-progress-track {
       height: 3px;
-      background: #1a1a1a;
+      background: var(--border-color);
     }
     .card-progress-bar {
       height: 100%;
@@ -228,13 +230,13 @@
     .card-name {
       font-size: 0.82rem;
       font-weight: 500;
-      color: #ccc;
+      color: var(--text-main);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       padding-right: 1.5rem; /* 为右侧留白 */
     }
-    .card-meta { font-size: 0.75rem; color: #444; }
+    .card-meta { font-size: 0.75rem; color: var(--text-muted); }
     .card-status {
       display: inline-flex;
       align-items: center;
@@ -246,15 +248,15 @@
       align-self: flex-start;
       margin-top: 0.1rem;
     }
-    .card-status.pending  { background: #1e1e1e; color: #555; }
-    .card-status.compressing { background: #1a1a30; color: #a5b4fc; } /* 新增状态 */
-    .card-status.uploading { background: #1a2a40; color: #60a5fa; } /* 新增状态 */
-    .card-status.done     { background: #0f2a1a; color: #4ade80; border: 1px solid #1a4a2a; }
-    .card-status.error    { background: #2a0f0f; color: #f87171; border: 1px solid #4a1a1a; }
+    .card-status.pending  { background: var(--bg-btn-secondary); color: var(--text-muted); }
+    .card-status.compressing { background: var(--bg-btn-secondary); color: var(--primary-color); } /* 新增状态 */
+    .card-status.uploading { background: var(--bg-btn-secondary); color: #60a5fa; } /* 新增状态 */
+    .card-status.done     { background: rgba(16, 185, 129, 0.1); color: var(--success-color); border: 1px solid rgba(16, 185, 129, 0.2); }
+    .card-status.error    { background: rgba(239, 68, 68, 0.1); color: var(--danger-color); border: 1px solid rgba(239, 68, 68, 0.2); }
 
     /* ── Result URLs ── */
     .result-urls {
-      border-top: 1px solid #1a1a1a;
+      border-top: 1px solid var(--border-color);
       padding: 0.65rem 0.85rem;
       display: flex;
       flex-direction: column;
@@ -268,7 +270,7 @@
     .url-label {
       font-size: 0.68rem;
       font-weight: 600;
-      color: #444;
+      color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.05em;
       min-width: 34px;
@@ -276,7 +278,7 @@
     .url-value {
       flex: 1;
       font-size: 0.72rem;
-      color: #818cf8;
+      color: var(--primary-color);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -285,17 +287,17 @@
     .url-copy {
       flex-shrink: 0;
       padding: 0.2rem 0.45rem;
-      background: #1a1a1a;
-      border: 1px solid #252525;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
       border-radius: 5px;
-      color: #666;
+      color: var(--text-muted);
       font-size: 0.68rem;
       cursor: pointer;
       transition: background 0.15s, color 0.15s, border-color 0.15s;
       white-space: nowrap;
     }
-    .url-copy:hover { background: #222; color: #aaa; border-color: #333; }
-    .url-copy.copied { background: #0f2a1a; color: #4ade80; border-color: #1a4a2a; }
+    .url-copy:hover { background: var(--bg-card-hover); color: var(--text-main); border-color: var(--border-hover); }
+    .url-copy.copied { background: rgba(16, 185, 129, 0.1); color: var(--success-color); border-color: rgba(16, 185, 129, 0.2); }
   </style>
 </head>
 <body>
