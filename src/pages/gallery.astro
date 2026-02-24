@@ -208,7 +208,8 @@ const imagesWithUrl = initialImages.map(img => ({
             article.dataset.id = img.id;
 
             const sizeKB = (img.size_bytes / 1024).toFixed(0);
-            const date = new Date(img.uploaded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const date = new Date(img.uploaded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const remoteFilename = img.url.split('/').pop() || '';
             const dims = img.width && img.height ? `${img.width}×${img.height} · ` : '';
             const mdLink = `![${img.filename}](${img.url})`;
             const htmlLink = `<img src="${img.url}" alt="${img.filename}">`;
@@ -220,8 +221,9 @@ const imagesWithUrl = initialImages.map(img => ({
                 </a>
               </div>
               <div class="meta">
-                <div class="filename" title="${img.filename}">${img.filename}</div>
-                <div class="info">${dims}${sizeKB} KB · ${date}</div>
+                <div class="filename" title="Original: ${img.filename}\nRemote: ${remoteFilename}">${img.filename} <span style="font-size:0.7rem;color:#888;font-weight:normal;">(${remoteFilename})</span></div>
+                <div class="info">${dims}${sizeKB} KB</div>
+                <div class="info" style="color:#888;margin-top:0.1rem;">${date}</div>
               </div>
               <div class="actions">
                 <button class="copy-btn" data-value="${img.url}">Direct</button>

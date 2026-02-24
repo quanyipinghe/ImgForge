@@ -11,7 +11,8 @@ interface Props {
 
 const { id, filename, url, size_bytes, width, height, uploaded_at } = Astro.props;
 const sizeKB = (size_bytes / 1024).toFixed(0);
-const date = new Date(uploaded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+const date = new Date(uploaded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+const remoteFilename = url.split('/').pop() || '';
 const mdLink = `![${filename}](${url})`;
 const htmlLink = `<img src="${url}" alt="${filename}">`;
 ---
@@ -22,9 +23,12 @@ const htmlLink = `<img src="${url}" alt="${filename}">`;
     </a>
   </div>
   <div class="meta">
-    <div class="filename" title={filename}>{filename}</div>
+    <div class="filename" title={`Original: ${filename}\nRemote: ${remoteFilename}`}>{filename} <span class="remote-name" title="Remote/Unique filename">({remoteFilename})</span></div>
     <div class="info">
-      {width && height ? `${width}×${height} · ` : ''}{sizeKB} KB · {date}
+      {width && height ? `${width}×${height} · ` : ''}{sizeKB} KB
+    </div>
+    <div class="info time">
+      {date}
     </div>
   </div>
   <div class="actions">
@@ -70,7 +74,13 @@ const htmlLink = `<img src="${url}" alt="${filename}">`;
     text-overflow: ellipsis;
     color: #e0e0e0;
   }
+  .remote-name {
+    font-size: 0.7rem;
+    color: #888;
+    font-weight: normal;
+  }
   .info { font-size: 0.75rem; color: #666; margin-top: 0.2rem; }
+  .info.time { color: #888; margin-top: 0.1rem; }
   .actions {
     display: flex;
     gap: 0.4rem;
