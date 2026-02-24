@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ImgForge — Upload</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <style>
+  <style is:global>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       min-height: 100vh;
@@ -42,14 +42,41 @@
     nav .links a.active { color: #818cf8; }
 
     /* ── Layout ── */
-    main { max-width: 860px; margin: 2.5rem auto; padding: 0 1.25rem 4rem; }
+    main { max-width: 860px; margin: 2.5rem auto; padding: 0 1.25rem 6rem; position: relative; }
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.75rem;
+    }
     .page-title {
       font-size: 1.5rem;
       font-weight: 700;
       letter-spacing: -0.03em;
-      margin-bottom: 1.75rem;
       color: #f5f5f5;
     }
+
+    /* ── Full Screen Drag Overlay ── */
+    #drag-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 10, 10, 0.85);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      border: 4px dashed #6366f1;
+    }
+    #drag-overlay.active {
+      opacity: 1;
+    }
+    #drag-overlay svg { width: 64px; height: 64px; color: #818cf8; margin-bottom: 1rem; }
+    #drag-overlay h2 { color: #fff; font-size: 1.5rem; font-weight: 600; }
 
     /* ── Drop Zone ── */
     .drop-zone {
@@ -71,13 +98,6 @@
       pointer-events: none;
     }
     .drop-zone:hover { border-color: #444; background: #131313; }
-    .drop-zone.dragover {
-      border-color: #6366f1;
-      background: #13132a;
-    }
-    .drop-zone.dragover::before {
-      background: radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.18) 0%, transparent 70%);
-    }
     .drop-icon {
       width: 52px;
       height: 52px;
@@ -90,41 +110,50 @@
       border: 1px solid #2a2a2a;
       transition: background 0.2s, border-color 0.2s;
     }
-    .drop-zone.dragover .drop-icon { background: #1e1e3a; border-color: #4f52cc; }
     .drop-icon svg { width: 24px; height: 24px; color: #818cf8; }
     .drop-zone h2 { font-size: 1rem; font-weight: 600; color: #e0e0e0; margin-bottom: 0.35rem; }
     .drop-zone p { color: #555; font-size: 0.82rem; }
     .drop-zone .hint { margin-top: 0.6rem; font-size: 0.78rem; color: #3a3a3a; }
     input[type="file"] { display: none; }
 
-    /* ── Upload Button ── */
-    .upload-btn {
+    /* ── Sticky Actions ── */
+    .sticky-actions {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 1rem;
+      z-index: 100;
+      pointer-events: none; /* Let empty space pass clicks */
+    }
+    .sticky-actions > button {
+      pointer-events: auto;
       display: none;
-      margin-top: 1.5rem;
-      width: 100%;
-      padding: 0.8rem 1rem;
-      background: linear-gradient(135deg, #6366f1, #818cf8);
-      color: #fff;
+      padding: 0.8rem 1.5rem;
       border: none;
-      border-radius: 10px;
-      font-size: 0.95rem;
+      border-radius: 12px;
+      font-size: 1rem;
       font-weight: 600;
       cursor: pointer;
       letter-spacing: 0.01em;
-      transition: opacity 0.2s, transform 0.15s;
-      position: relative;
-      overflow: hidden;
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
     }
-    .upload-btn::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(255,255,255,0.08), transparent);
-      pointer-events: none;
+    .upload-btn {
+      background: linear-gradient(135deg, #6366f1, #818cf8);
+      color: #fff;
     }
-    .upload-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+    .upload-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(99,102,241,0.4); }
     .upload-btn:active:not(:disabled) { transform: translateY(0); }
-    .upload-btn:disabled { background: #222; color: #444; cursor: not-allowed; transform: none; }
+    .upload-btn:disabled { background: #222; color: #444; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .copy-all-btn {
+      background: #1e1e1e;
+      color: #e0e0e0;
+      border: 1px solid #333 !important;
+    }
+    .copy-all-btn:hover { background: #2a2a2a; color: #fff; border-color: #444 !important; }
 
     /* ── Card Grid ── */
     .queue {
@@ -144,11 +173,36 @@
       flex-direction: column;
       animation: cardIn 0.25s ease both;
       transition: border-color 0.2s;
+      position: relative;
     }
     @keyframes cardIn {
       from { opacity: 0; transform: translateY(10px) scale(0.97); }
       to   { opacity: 1; transform: translateY(0) scale(1); }
     }
+    
+    /* 移除按钮 */
+    .remove-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(0, 0, 0, 0.6);
+      border: none;
+      color: #fff;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s, background 0.2s;
+      z-index: 5;
+    }
+    .queue-card:hover .remove-btn { opacity: 1; }
+    .remove-btn:hover { background: rgba(239, 68, 68, 0.8); }
+    .remove-btn svg { width: 14px; height: 14px; }
+
     .card-thumb {
       width: 100%;
       aspect-ratio: 4/3;
@@ -157,7 +211,7 @@
       background: #0f0f0f;
     }
 
-    /* Progress bar — sits right below thumb */
+    /* Progress bar */
     .card-progress-track {
       height: 3px;
       background: #1a1a1a;
@@ -166,7 +220,7 @@
       height: 100%;
       width: 0%;
       background: linear-gradient(90deg, #6366f1, #a5b4fc);
-      transition: width 0.4s ease;
+      transition: width 0.1s linear; /* XHR 更新快，用线性过渡更流畅 */
       border-radius: 0 2px 2px 0;
     }
 
@@ -178,6 +232,7 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      padding-right: 1.5rem; /* 为右侧留白 */
     }
     .card-meta { font-size: 0.75rem; color: #444; }
     .card-status {
@@ -192,11 +247,12 @@
       margin-top: 0.1rem;
     }
     .card-status.pending  { background: #1e1e1e; color: #555; }
-    .card-status.working  { background: #1a1a30; color: #818cf8; }
+    .card-status.compressing { background: #1a1a30; color: #a5b4fc; } /* 新增状态 */
+    .card-status.uploading { background: #1a2a40; color: #60a5fa; } /* 新增状态 */
     .card-status.done     { background: #0f2a1a; color: #4ade80; border: 1px solid #1a4a2a; }
     .card-status.error    { background: #2a0f0f; color: #f87171; border: 1px solid #4a1a1a; }
 
-    /* ── Result URLs (shown after upload success) ── */
+    /* ── Result URLs ── */
     .result-urls {
       border-top: 1px solid #1a1a1a;
       padding: 0.65rem 0.85rem;
@@ -252,8 +308,20 @@
     </div>
   </nav>
 
+  <!-- 全局拖拽遮罩 (Drag Overlay) -->
+  <div id="drag-overlay">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="17 8 12 3 7 8"/>
+      <line x1="12" y1="3" x2="12" y2="15"/>
+    </svg>
+    <h2>Drop images to upload</h2>
+  </div>
+
   <main>
-    <h1 class="page-title">Upload Images</h1>
+    <div class="page-header">
+      <h1 class="page-title">Upload Images</h1>
+    </div>
 
     <div class="drop-zone" id="drop-zone">
       <div class="drop-icon">
@@ -269,50 +337,113 @@
     </div>
 
     <div class="queue" id="queue"></div>
-    <button class="upload-btn" id="upload-btn">Upload All</button>
+    
+    <div class="sticky-actions">
+      <button class="upload-btn" id="upload-btn">Upload All (0)</button>
+      <button class="copy-all-btn" id="copy-all-btn">Copy All Markdown Links (0)</button>
+    </div>
   </main>
 
   <script>
-    const dropZone = document.getElementById('drop-zone')!;
-    const fileInput = document.getElementById('file-input') as HTMLInputElement;
-    const queue = document.getElementById('queue')!;
-    const uploadBtn = document.getElementById('upload-btn') as HTMLButtonElement;
+    const dropZone = document.getElementById('drop-zone');
+    const dragOverlay = document.getElementById('drag-overlay');
+    const fileInput = document.getElementById('file-input');
+    const queueNode = document.getElementById('queue');
+    const uploadBtn = document.getElementById('upload-btn');
+    const copyAllBtn = document.getElementById('copy-all-btn');
 
-    let pendingFiles: File[] = [];
-    // Map filename → card element (supports multiple files with same name by index)
-    const cardMap = new Map<File, HTMLElement>();
+    // 队列管理数据结构
+    let fileQueue = [];
+    const MAX_CONCURRENCY = 3; // 最大并发数限制
+    let uploadedMarkdownLinks = [];
 
-    dropZone.addEventListener('click', () => fileInput.click());
-    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
-    dropZone.addEventListener('dragleave', (e) => {
-      if (!dropZone.contains(e.relatedTarget as Node)) dropZone.classList.remove('dragover');
-    });
-    dropZone.addEventListener('drop', (e) => {
+    // --- 全屏拖拽 (Drag & Drop Overlay) ---
+    let dragCounter = 0;
+    window.addEventListener('dragenter', (e) => {
       e.preventDefault();
-      dropZone.classList.remove('dragover');
-      const files = Array.from(e.dataTransfer?.files ?? []).filter(f => f.type.startsWith('image/'));
+      dragCounter++;
+      // 判断是否包含文件拖拽
+      if (e.dataTransfer && e.dataTransfer.types.includes('Files')) {
+        dragOverlay.classList.add('active');
+      }
+    });
+    window.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      dragCounter--;
+      if (dragCounter === 0) {
+        dragOverlay.classList.remove('active');
+      }
+    });
+    window.addEventListener('dragover', (e) => {
+      e.preventDefault();
+    });
+    window.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dragCounter = 0;
+      dragOverlay.classList.remove('active');
+      
+      const files = Array.from(e.dataTransfer?.files || []).filter(f => f.type.startsWith('image/'));
       addFiles(files);
     });
+
+    // --- 原有 Drop Zone 点击和选择 ---
+    dropZone.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', () => {
-      addFiles(Array.from(fileInput.files ?? []));
+      addFiles(Array.from(fileInput.files || []));
       fileInput.value = '';
     });
 
-    function addFiles(files: File[]) {
+    // --- 添加文件与渲染卡片 ---
+    let fileIdCounter = 0;
+    function addFiles(files) {
       if (!files.length) return;
-      pendingFiles.push(...files);
-      files.forEach(f => {
-        const card = renderCard(f);
-        cardMap.set(f, card);
+      
+      files.forEach(file => {
+        const id = 'file_' + (fileIdCounter++);
+        const fileData = {
+          id,
+          file,
+          status: 'pending', // 预备: pending, 压缩中: compressing, 上传中: uploading, 完成: done, 错误: error
+          progress: 0,
+          cardEl: null,
+          url: null
+        };
+        fileData.cardEl = renderCard(fileData);
+        fileQueue.push(fileData);
       });
-      uploadBtn.style.display = 'block';
+      updateActionsVisibility();
     }
 
-    function renderCard(file: File): HTMLElement {
+    // --- 移除队列文件 ---
+    function removeFile(fileId) {
+      const idx = fileQueue.findIndex(item => item.id === fileId);
+      if (idx !== -1) {
+        const item = fileQueue[idx];
+        if (item.status === 'pending' || item.status === 'error') {
+          item.cardEl.remove(); // DOM 移除
+          fileQueue.splice(idx, 1); // 内存移除
+          updateActionsVisibility();
+        }
+      }
+    }
+
+    function renderCard(fileData) {
+      const file = fileData.file;
       const card = document.createElement('div');
       card.className = 'queue-card';
+      card.id = fileData.id;
 
-      // Thumbnail
+      // 移除/取消按钮
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'remove-btn';
+      removeBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+      removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        removeFile(fileData.id);
+      });
+      card.appendChild(removeBtn);
+
+      // 缩图
       const thumb = document.createElement('img');
       thumb.className = 'card-thumb';
       const objUrl = URL.createObjectURL(file);
@@ -320,14 +451,14 @@
       thumb.alt = file.name;
       thumb.onload = () => URL.revokeObjectURL(objUrl);
 
-      // Progress track
+      // 进度条
       const track = document.createElement('div');
       track.className = 'card-progress-track';
       const bar = document.createElement('div');
       bar.className = 'card-progress-bar';
       track.appendChild(bar);
 
-      // Body
+      // 信息区
       const body = document.createElement('div');
       body.className = 'card-body';
 
@@ -351,30 +482,65 @@
       card.appendChild(thumb);
       card.appendChild(track);
       card.appendChild(body);
-      queue.appendChild(card);
+      queueNode.appendChild(card);
       return card;
     }
 
-    function setCardStatus(card: HTMLElement, state: 'pending'|'working'|'done'|'error', text: string) {
-      const el = card.querySelector('.card-status') as HTMLElement;
-      el.className = `card-status ${state}`;
-      const icons: Record<string, string> = {
-        pending: '', working: '⟳ ', done: '✓ ', error: '✕ '
-      };
-      el.textContent = icons[state] + text;
+    // 更新底部悬浮按钮的显隐状态
+    function updateActionsVisibility() {
+      const pendingCount = fileQueue.filter(f => f.status === 'pending').length;
+      if (pendingCount > 0) {
+        uploadBtn.style.display = 'block';
+        uploadBtn.textContent = `Upload All (${pendingCount})`;
+        uploadBtn.disabled = false;
+      } else {
+        uploadBtn.style.display = 'none';
+      }
+
+      if (uploadedMarkdownLinks.length > 0) {
+        copyAllBtn.style.display = 'block';
+        copyAllBtn.textContent = `Copy All Markdown Links (${uploadedMarkdownLinks.length})`;
+      } else {
+        copyAllBtn.style.display = 'none';
+      }
     }
 
-    function setProgress(card: HTMLElement, pct: number) {
-      const bar = card.querySelector('.card-progress-bar') as HTMLElement;
+    function setCardStatus(fileData, state, text) {
+      fileData.status = state;
+      const el = fileData.cardEl.querySelector('.card-status');
+      el.className = `card-status ${state}`;
+      
+      const icons = {
+        pending: '', compressing: '⚡ ', uploading: '⟳ ', done: '✓ ', error: '✕ '
+      };
+      el.textContent = icons[state] + text;
+
+      // 如果进入了上传或压缩环节，隐藏移除按钮（不允许中断），但如果失败则重新显示可移除
+      const removeBtn = fileData.cardEl.querySelector('.remove-btn');
+      if (removeBtn) {
+        if (state === 'pending' || state === 'error') {
+          removeBtn.style.display = 'flex';
+        } else {
+          removeBtn.style.display = 'none';
+        }
+      }
+    }
+
+    function setProgress(fileData, pct) {
+      fileData.progress = pct;
+      const bar = fileData.cardEl.querySelector('.card-progress-bar');
       bar.style.width = `${pct}%`;
     }
 
-    function showResultUrls(card: HTMLElement, url: string, filename: string) {
+    function showResultUrls(fileData, url, filename) {
       const links = [
         { label: 'URL', value: url },
         { label: 'MD',  value: `![${filename}](${url})` },
         { label: 'IMG', value: `<img src="${url}" alt="${filename}">` },
       ];
+
+      // 累加到全局复制队列
+      uploadedMarkdownLinks.push(links[1].value);
 
       const box = document.createElement('div');
       box.className = 'result-urls';
@@ -409,10 +575,11 @@
         box.appendChild(row);
       });
 
-      card.appendChild(box);
+      fileData.cardEl.appendChild(box);
+      updateActionsVisibility();
     }
 
-    async function compressImage(file: File): Promise<{ blob: Blob; width: number; height: number }> {
+    async function compressImage(file) {
       return new Promise((resolve, reject) => {
         const img = new Image();
         const url = URL.createObjectURL(file);
@@ -427,8 +594,8 @@
           }
           const canvas = document.createElement('canvas');
           canvas.width = w; canvas.height = h;
-          canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
-          const tryQ = (q: number) => {
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          const tryQ = (q) => {
             canvas.toBlob((blob) => {
               if (!blob) { reject(new Error('toBlob failed')); return; }
               if (blob.size <= MAX_SIZE || q <= 0.3) resolve({ blob, width: w, height: h });
@@ -443,58 +610,124 @@
       });
     }
 
+    // 使用 XMLHttpRequest 替代 fetch 以获取真实的上传进度流 (onprogress)
+    async function uploadImageFile(fileData, blob, width, height) {
+      return new Promise((resolve, reject) => {
+        const fd = new FormData();
+        fd.append('file', blob, fileData.file.name);
+        fd.append('filename', fileData.file.name);
+        fd.append('width', String(width));
+        fd.append('height', String(height));
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/images/upload');
+        
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percentComplete = (event.loaded / event.total) * 100;
+            // 考虑：压缩占 10%，上传占 85%，后端最终处理占 5%
+            const displayProgress = 10 + (percentComplete * 0.85);
+            setProgress(fileData, displayProgress);
+          }
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const res = JSON.parse(xhr.responseText);
+              resolve(res);
+            } catch (e) {
+              reject(new Error('Invalid JSON response'));
+            }
+          } else {
+            try {
+              const res = JSON.parse(xhr.responseText);
+              reject(new Error(res.error || `HTTP ${xhr.status}`));
+            } catch (e) {
+              reject(new Error(`HTTP ${xhr.status}`));
+            }
+          }
+        };
+
+        xhr.onerror = () => {
+          reject(new Error('Network Error'));
+        };
+
+        xhr.send(fd);
+      });
+    }
+
+    // 核心流：压缩 -> 上传 -> 接收数据并渲染
+    async function processFile(fileData) {
+      try {
+        setCardStatus(fileData, 'compressing', 'Compressing…');
+        setProgress(fileData, 2);
+        
+        const { blob, width, height } = await compressImage(fileData.file);
+        
+        setCardStatus(fileData, 'uploading', 'Uploading…');
+        setProgress(fileData, 10);
+
+        const data = await uploadImageFile(fileData, blob, width, height);
+        
+        setProgress(fileData, 100);
+        const compressed = `${(blob.size / 1024).toFixed(0)} KB`;
+        setCardStatus(fileData, 'done', `Done · ${compressed}`);
+        fileData.cardEl.style.borderColor = '#1a4a2a';
+        fileData.url = data.url;
+        showResultUrls(fileData, data.url, fileData.file.name);
+
+      } catch (e) {
+        setCardStatus(fileData, 'error', String(e.message || e));
+        fileData.cardEl.style.borderColor = '#4a1a1a';
+      }
+    }
+
+    // 并发任务调度器
     uploadBtn.addEventListener('click', async () => {
-      if (!pendingFiles.length) return;
+      const pendingTasks = fileQueue.filter(f => f.status === 'pending');
+      if (!pendingTasks.length) return;
+      
       uploadBtn.disabled = true;
       uploadBtn.textContent = 'Uploading…';
-
-      const filesToUpload = [...pendingFiles];
-      pendingFiles = [];
-
-      for (const file of filesToUpload) {
-        const card = cardMap.get(file);
-        if (!card) continue;
-
-        setCardStatus(card, 'working', 'Compressing…');
-        setProgress(card, 20);
-
-        try {
-          const { blob, width, height } = await compressImage(file);
-          setCardStatus(card, 'working', 'Uploading…');
-          setProgress(card, 55);
-
-          const fd = new FormData();
-          fd.append('file', blob, file.name);
-          fd.append('filename', file.name);
-          fd.append('width', String(width));
-          fd.append('height', String(height));
-
-          const res = await fetch('/api/images/upload', { method: 'POST', body: fd });
-          setProgress(card, 100);
-
-          if (res.ok) {
-            const data = await res.json() as { url: string; id: string };
-            const compressed = `${(blob.size / 1024).toFixed(0)} KB`;
-            setCardStatus(card, 'done', `Done · ${compressed}`);
-            card.style.borderColor = '#1a4a2a';
-            showResultUrls(card, data.url, file.name);
-          } else {
-            const err = await res.json() as { error?: string };
-            setCardStatus(card, 'error', err.error ?? 'Upload failed');
-            card.style.borderColor = '#4a1a1a';
-          }
-        } catch (e) {
-          setCardStatus(card, 'error', String(e));
-          card.style.borderColor = '#4a1a1a';
+      
+      let index = 0;
+      
+      // 并发执行器，从任务池依次拉取任务
+      const worker = async () => {
+        while (index < pendingTasks.length) {
+          const task = pendingTasks[index++];
+          await processFile(task);
         }
-      }
+      };
 
-      uploadBtn.disabled = false;
-      uploadBtn.textContent = 'Upload All';
-      if (!pendingFiles.length) uploadBtn.style.display = 'none';
+      // 启动并等待并发执行
+      const workers = Array(Math.min(MAX_CONCURRENCY, pendingTasks.length)).fill(0).map(worker);
+      await Promise.all(workers);
+
+      updateActionsVisibility();
     });
 
-    document.getElementById('logout-link')!.addEventListener('click', async (e) => {
+    // 针对批量的快捷复制
+    copyAllBtn.addEventListener('click', async () => {
+      if (!uploadedMarkdownLinks.length) return;
+      const textToCopy = uploadedMarkdownLinks.join('\n');
+      try {
+        await navigator.clipboard.writeText(textToCopy);
+        const origText = copyAllBtn.textContent;
+        copyAllBtn.textContent = 'Copied All!';
+        copyAllBtn.classList.add('copied');
+        setTimeout(() => {
+          copyAllBtn.textContent = origText;
+          copyAllBtn.classList.remove('copied');
+        }, 2000);
+      } catch (e) {
+        prompt('Copy All Markdown Links:', textToCopy);
+      }
+    });
+
+    // 登出绑定
+    document.getElementById('logout-link').addEventListener('click', async (e) => {
       e.preventDefault();
       await fetch('/api/auth/logout', { method: 'POST' });
       window.location.href = '/login';
